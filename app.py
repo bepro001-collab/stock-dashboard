@@ -36,9 +36,14 @@ st.markdown("""
 # 2. 한국 거래소 실시간 종목 리스트 로딩 (캐싱)
 @st.cache_data
 def get_krx_stocks():
-    return fdr.StockListing('KRX')
+    try:
+        return fdr.StockListing('KRX')
+    except Exception as e:
+        return None
 
 df_krx = get_krx_stocks()
+if df_krx is None:
+    st.warning("⚠️ KRX(한국거래소) 종목 리스트를 불러오지 못했습니다. 한글 종목명 검색은 일시적으로 사용할 수 없습니다. 종목코드(6자리) 또는 미국 티커는 계속 사용 가능합니다.")
 
 # 3. 사이드바: 사용자 자유 입력 조건 설정
 st.sidebar.header("🔍 분석 조건 설정")
@@ -127,7 +132,7 @@ if st.sidebar.button("📊 실시간 차트 생성"):
             st.success(f"🌎 미국 주식 티커로 인식했습니다: {final_ticker}")
         else:
             if not target_ticker.isdigit():
-                match = df_krx[df_krx['Name'] == target_ticker]
+                match = df_krx[df_krx['Name'] == target_ticker] if df_krx is not None else pd.DataFrame()
                 if not match.empty:
                     search_code = match['Code'].values[0]
                     st.success(f"✅ [{target_ticker}] 종목 코드를 찾았습니다: {search_code}")
